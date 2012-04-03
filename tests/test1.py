@@ -1,4 +1,4 @@
-from xmlsceneparser import XMLSceneParser
+from panity.xmlsceneparser import XMLSceneParser
 
 roots = XMLSceneParser.read("testscene1.xml")
     

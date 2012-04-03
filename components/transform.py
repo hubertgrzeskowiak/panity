@@ -1,4 +1,4 @@
-from component import Component
+from panity.component import Component
 from panda3d.core import NodePath
 
 class Transform(Component):
