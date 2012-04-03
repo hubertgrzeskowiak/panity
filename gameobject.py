@@ -45,7 +45,7 @@ class GameObject(Object):
         return comp_object
 
     def getComponent(self, component):
-        if self.__components.hasKey(component):
+        if self.__components.has_key(component):
             return self.__components[component]
 
     @property
