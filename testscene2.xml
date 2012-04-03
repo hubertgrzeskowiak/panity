@@ -1,0 +1,8 @@
+<scene>
+    <gameobject name="ground">
+    </gameobject>
+    <gameobject name="house">
+    </gameobject>
+    <gameobject name="something">
+    </gameobject>
+</scene>

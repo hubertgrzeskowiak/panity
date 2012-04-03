@@ -1,0 +1,43 @@
+<scene>
+    <!-- the prefab defines a ground collision plane for us -->
+    <gameobject name="ground" prefab="ground">
+        <!--
+        Transform is the only component which attributes are
+        never linked to a prefab.
+        if no transform component is given, we assume it's like this one:
+        -->
+        <component type="Transform">
+            <localPosition>(0.0,0.0,0.0)</localPosition>
+            <localEulerAngles>(0.0,0.0,0.0)</localEulerAngles>
+        </component>
+        <!--
+        the ground prefab must have a Mesh component, otherwise the connection
+        is lost or the prefab needs to be updated with the new component
+        -->
+        <component type="Mesh">
+            <!--
+            the path will be extended with an appropriate file extension
+            where the first found is used. priority order is:
+            .bam.pz,  .bam,  .egg.pz,  .egg  and  .x
+            -->
+            <source>assets/level/ground</source>
+        </component>
+    </gameobject>
+    <gameobject name="house">
+        <component type="Transform">
+            <localPosition>(3.0,3.0,0.0)</localPosition>
+            <localEulerAngles>(0.0,0.0,10.0)</localEulerAngles>
+        </component>
+        <component type="Mesh">
+            <source>assets/level/house</source>
+        </component>
+        <component type="BoxCollider">
+            <scale>(2.0,2.0,3.3)</scale>
+        </component>
+        <component type="Behavior">
+            <source>scripts/level/houseinteractions</source>
+        </component>
+    </gameobject>
+
+
+</scene>
