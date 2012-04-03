@@ -3,8 +3,16 @@ from xmlsceneparser import XMLSceneParser
 roots = XMLSceneParser.read("testscene3.xml")
     
 for go in roots:
-    pass
-    a = go.transform.position
-    print a
-    #print go.transform.position
-    #print go.transform
+    print go
+    for child in go:
+        print "- "+str(child)
+
+    # this is actually the same;
+    #children = go.transform.getChildren()
+    #for child in children:
+    #    print "- "+str(child.game_object)
+
+    # and this:
+    #for child in go.transform:
+    #    print "- "+str(child.game_object)
+
