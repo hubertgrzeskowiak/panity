@@ -18,6 +18,11 @@ class GameObject(Object):
         for component in components:
             self.addComponent(component)    
 
+    def getChildren(self):
+        """Return a list of children as game objects."""
+        # this requires self.__iter__
+        return [c for c in self]
+
     def __iter__(self):
         for t in self.transform:
             yield t.gameobject
