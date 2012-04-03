@@ -35,7 +35,7 @@ class XMLSceneParser(ParserInterface):
         prefab = xml_child.get("prefab")
         name = xml_child.get("name")
         if prefab:
-            go = _getGameObjectFromPrefab(prefab, name)
+            go = XMLSceneParser._getGameObjectFromPrefab(prefab, name)
         else:
             # prefab attribute not set
             go = GameObject(name=name)
