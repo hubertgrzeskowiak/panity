@@ -7,9 +7,10 @@ class Transform(Component):
     
     In Panity this is a wrapper for a NodePath.
     """
-    def __init__(self, gameobject):
-        Component.__init__(self, gameobject)
-        self.node = NodePath(gameobject.name)
+    def __init__(self, gameo_bject):
+        # Component class sets self.game_object = game_object
+        Component.__init__(self, game_object)
+        self.node = NodePath(game_object.name)
         self.node.setPythonTag("transform", self)
         self.root = self
 
@@ -78,15 +79,17 @@ class Transform(Component):
     def parent(self, parent):
         self.node.wrtReparentTo(parent.node)
     
-    def _destroy(self):
+    def destroy(self):
         """Ultimately remove this transform. Warning: this might cause errors
         for other components on this game object.
         """
         self.node.removeNode()
-    
-    def children(self):
-        return self.node.getChildren()
-    
+
+    def getChildren(self):
+        """Return children as Transforms."""
+        # this requires the following method __iter__
+        return [c for c in self]
+
     def __iter__(self):
         """Iterate over children nodes and yield the transform instances."""
         for child in self.node.getChildren():

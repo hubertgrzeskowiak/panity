@@ -4,9 +4,9 @@ from properties import SerializedProperty
 class Component(Object):
     """base class for everything that can be attached to game objects."""
 
-    def __init__(self, gameobject):
+    def __init__(self, game_object):
         Object.__init__(self)
-        self.game_object = gameobject
+        self.game_object = game_object
 
     @classmethod
     def getAttributes(cls):
