@@ -1,5 +1,5 @@
 class BuildSettings(object):
-    # format: 
+    # format: ?
     scenes = []
 
 class Application(object):
@@ -9,3 +9,4 @@ class Application(object):
         # check the attribute "dont_destroy_on_load"
         # destroy those objects which do not have that attribute
         # 
+        pass
