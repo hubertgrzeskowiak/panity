@@ -7,7 +7,7 @@ class Transform(Component):
     
     In Panity this is a wrapper for a NodePath.
     """
-    def __init__(self, gameo_bject):
+    def __init__(self, game_object):
         # Component class sets self.game_object = game_object
         Component.__init__(self, game_object)
         self.node = NodePath(game_object.name)

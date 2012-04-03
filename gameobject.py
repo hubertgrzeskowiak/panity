@@ -25,7 +25,7 @@ class GameObject(Object):
 
     def __iter__(self):
         for t in self.transform:
-            yield t.gameobject
+            yield t.game_object
 
     def addComponent(self, component):
         """component can be class name or class. Instances of components are
