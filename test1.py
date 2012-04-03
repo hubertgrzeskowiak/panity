@@ -1,6 +1,6 @@
 from xmlsceneparser import XMLSceneParser
 
-roots = XMLSceneParser.read("testscene3.xml")
+roots = XMLSceneParser.read("testscene1.xml")
     
 for go in roots:
     print go
