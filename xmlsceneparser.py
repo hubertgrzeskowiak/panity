@@ -14,7 +14,7 @@ class XMLSceneParser(ParserInterface):
     @staticmethod
     def read(source, validate=True):
         """Read a scene from an xml file, create it and return a list of the
-        root game objects.
+        root game objects. AssertionErrors can be thrown when validation fails.
         """
         # TODO: get the path from vfs and os-specific (appropriate for etree)
         xmlscene = etree.parse(source)
@@ -37,8 +37,10 @@ class XMLSceneParser(ParserInterface):
         if prefab:
             go = _getGameObjectFromPrefab(prefab, name)
         else:
+            # prefab attribute not set
             go = GameObject(name=name)
         for go_or_comp in xml_child:
+            # a game object can contain game objects and components
             if go_or_comp.tag == "gameobject":
                 xml_go = go_or_comp
                 XMLSceneParser._appendGameObject(xml_go, go)
@@ -54,7 +56,7 @@ class XMLSceneParser(ParserInterface):
                     setattr(comp, option, option.text)
         go.name = name
         if parent:
-            go.parent = parent
+            go.transform.parent = parent.transform
         else:
             return go
 
