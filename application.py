@@ -6,11 +6,24 @@ class LevelLoadingError(Exception):
     pass
 
 class Application(object):
+    # list of outputs of scene parser
+    active_scenes = []
+
+    @staticmethod
+    def run():
+        scene = XMLSceneParser(BuildSettings.scenes[0])
+        Application.active_scenes.append(scene)
+        # create a scene graph
+        # create a camera if there is none
+        # start the task for the game
+        # offer ways to pause and stop
+
     @staticmethod
     def loadLevel(name_or_index):
         # iterate over all objects in the current scene
         # check the attribute "dont_destroy_on_load"
         # destroy those objects which do not have that attribute
+        # Application.active_scenes = []
         # call loadLevelAdditive()
         raise NotImplementedError
     
