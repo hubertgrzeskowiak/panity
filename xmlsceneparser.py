@@ -46,12 +46,15 @@ class XMLSceneParser(ParserInterface):
                 XMLSceneParser._appendGameObject(xml_go, go)
             elif go_or_comp.tag == "component":
                 xml_comp = go_or_comp
+                # does the GO already have such a component?
                 comp = go.getComponent(xml_comp.get("type"))
-                # WARNING: Here the API differs from that of Unity.
-                # Get back here after thinking a bit about prefabs and their
-                # connections to objects.
                 if not comp:
-                    comp = go.addComponent(xml_comp)
+                    # if not, create it
+                    comp = go.addComponent(xml_comp.get("type"))
+                else:
+                    print "".join(["second appearence of component '{}' ",
+                                   "in game object '{}' ignored"]).format(
+                                   xml_comp.get("type"), go.name)
                 for option in xml_comp:
                     setattr(comp, option, option.text)
         go.name = name

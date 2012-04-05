@@ -24,6 +24,7 @@ def validateScene(scene):
 def validateGameObject(go):
     """go should be an xml element (-tree) of type gameobject."""
     assert go.tag == "gameobject", "game object expected"
+    components = []
     for go_or_comp in go:
         # all children of game objects must be
         # either game objects or components
@@ -31,6 +32,12 @@ def validateGameObject(go):
             validateGameObject(go_or_comp)
         elif go_or_comp.tag == "component":
             validateComponent(go_or_comp)
+            if go_or_comp.get("type") in components:
+                print "".join(["WARNING! game object '{}' has the '{}' ",
+                      "component multiple times!"]).format(
+                      go.get("name"), go_or_comp.get("type"))
+            components.append(go_or_comp.get("type"))
+
         else:
             raise AssertionError("a game object must contain game "+\
                 "objects and/or components only")

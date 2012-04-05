@@ -19,7 +19,7 @@ class Component(Object):
         self.game_object = game_object
 
     @classmethod
-    def getSerializedAttributes(cls):
+    def getSerializedProperties(cls):
         """Return all special property attributes. Only attributes derived from
         SerializedProperty are respected.
         """

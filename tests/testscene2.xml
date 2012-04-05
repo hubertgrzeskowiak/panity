@@ -1,0 +1,16 @@
+<scene>
+    <gameobject name="ground">
+        <component type="DummyComponent">
+        </component>
+        <component type="DummyComponent">
+        </component>
+    </gameobject>
+    <gameobject name="house">
+        <gameobject name="door">
+            <component type="DummyComponent">
+            </component>
+        </gameobject>
+    </gameobject>
+    <gameobject name="something">
+    </gameobject>
+</scene>

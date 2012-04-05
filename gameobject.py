@@ -13,7 +13,7 @@ class GameObject(Object):
     def __init__(self, name=None, components=[]):
         Object.__init__(self)
         self.name = name if name else "unnamed game object"
-        self.__components = {}
+        self.components = {}
         self.transform = Transform(self)
         for component in components:
             self.addComponent(component)    
@@ -31,26 +31,27 @@ class GameObject(Object):
         """component can be class name or class. Instances of components are
         not allowed. The newly added component object is returned.
         """
-        if component in self.__components:
+        if component in self.components:
             raise AttributeError("game object {} already has a {} "+\
                 "component".format(self.transform.name, str(component)))
         if type(component) in types.StringTypes:
-            comp_module = getattr(components, component.lower())
+            comp_module = __import__("components."+component.lower(), globals(), locals(), [None])
             comp_class = getattr(comp_module, component)
             comp_object = comp_class(self)
-            self.__components[component] = comp_object
+            self.components[component] = comp_object
         else:
             comp_object = component()
-            self.__components.append(comp_object)
+            self.components.append(comp_object)
         return comp_object
 
     def getComponent(self, component):
-        if self.__components.has_key(component):
-            return self.__components[component]
+        if self.components.has_key(component):
+            return self.components[component]
 
     @property
     def transform(self):
         return self._transform
+
     @transform.setter
     def transform(self, transform):
         """transform is an instance of the Transform component.
@@ -59,4 +60,4 @@ class GameObject(Object):
         if getattr(self, "_transform", None):
             self._transform._destroy()
         self._transform = transform
-        self.__components["transform"] = transform
+        self.components["Transform"] = transform
