@@ -11,14 +11,14 @@
     <!-- since we need multiple collision solids, these must be children -->
     <gameobject name="collision body">
         <component type="BoxCollider">
-            <center>(0.0,-1.2,0.45)</center>
-            <size>(1.0,13.0,5.3)</size>
+            <center>0.0,-1.2,0.45</center>
+            <size>1.0,13.0,5.3</size>
         </component>
     </gameobject>
     <gameobject name="collision wings">
         <component type="BoxCollider">
-            <center>(0.0,-2.2,0.0)</center>
-            <size>(8.0,1.7,0.4)</size>
+            <center>0.0,-2.2,0.0</center>
+            <size>8.0,1.7,0.4</size>
         </component>
     </gameobject>
 </gameobject>
