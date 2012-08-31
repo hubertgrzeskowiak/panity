@@ -1,3 +1,6 @@
+Warning: This software underlies heavy development and is not yet usable
+in any form!
+
 Panity is a workflow model and level editor for Panda3D
 that tries to bring proven ideas from Unity3D to the open source
 world. Unity3D is a great game engine with integrated editor and a very
