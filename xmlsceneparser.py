@@ -13,17 +13,18 @@ class XMLSceneParser(ParserInterface):
     """An xml parser for scenes."""
     @staticmethod
     def read(source, validate=True):
-        """Read a scene from an xml file, create it and return a list of the
-        root game objects. AssertionErrors can be thrown when validation fails.
+        """Read a scene from an xml file, create it and return a root game object.
+        AssertionErrors can be thrown when validation fails.
         """
         # TODO: get the path from vfs and os-specific (appropriate for etree)
         xmlscene = etree.parse(source)
         if validate:
             validateScene(xmlscene.getroot())
-        roots = []
-        for xml_go_root in xmlscene.getroot():
-            roots.append(XMLSceneParser._appendGameObject(xml_go_root))
-        return roots
+        root = GameObject(source.rsplit(".xml", 1)[0])
+        for xml_go in xmlscene.getroot():
+            go = XMLSceneParser._appendGameObject(xml_go)
+            go.transform.parent = root.transform
+        return root
 
     @staticmethod
     def _appendGameObject(xml_child, parent=None):
