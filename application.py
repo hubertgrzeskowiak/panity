@@ -1,6 +1,7 @@
 class BuildSettings(object):
     # list of panda3d.core.Filename
     scenes = []
+    # additional settings could be optimizations or target platforms
 
 class LevelLoadingError(Exception):
     pass
@@ -11,6 +12,8 @@ class Application(object):
 
     @staticmethod
     def run():
+        if len(BuildSettings.scenes) < 1:
+            return
         scene = XMLSceneParser(BuildSettings.scenes[0])
         Application.active_scenes.append(scene)
         # create a scene graph
