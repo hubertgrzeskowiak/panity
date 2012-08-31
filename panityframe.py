@@ -1,16 +1,22 @@
 # -*- coding: utf-8 -*- 
-
 import wx
 from wx.lib.agw import aui
 
 from inspectorpanel import InspectorPanel
-from gamepanel import GamePanel
+from pandaviewport import PandaViewport
 
-class PanityFrame (wx.Frame):
-    
+class PanityFrame(wx.Frame):
     def __init__(self, parent):
         wx.Frame.__init__ (self, parent, wx.ID_ANY, u"Panity Editor", wx.DefaultPosition, wx.Size(800,600),
             wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL|wx.EXPAND, "panity main frame")
+
+        # This is necessary for any embedded windows, since we can't get a handle untiĺ the frame is shown
+        self.Show()
+        # TODO: Find out if there's an event for when the window is shown automatically.
+        #       By showing the window so soon we get some ugly layout flickering.
+
+        self.SetTitle("Panity")
+
         top_level_sizer = wx.FlexGridSizer(2, 1, 0, 0)
         top_level_sizer.AddGrowableCol(0)
         top_level_sizer.AddGrowableRow(1)
@@ -75,23 +81,17 @@ class PanityFrame (wx.Frame):
 
         
         # Game Panel
-        self.game_panel = GamePanel(self.content_panel)
+        self.game_panel = PandaViewport(self.content_panel)
+        self.game_panel.SetMinSize(wx.Size(200,200))
         content_sizer.Add(self.game_panel, 1, wx.EXPAND)
+        self.game_panel.initialize()
 
         
         # Editor Pane
-        editor_panel_sizer = wx.BoxSizer(wx.VERTICAL)
-        self.editor_panel = wx.Panel(self.content_panel, name="editor pane")
+        self.editor_panel = PandaViewport(self.content_panel)
         self.editor_panel.SetMinSize(wx.Size(200,200))
-        self.editor_panel.SetSizer(editor_panel_sizer)
-
-        self.panda3d_editor_placeholder = wx.StaticText(self.editor_panel, wx.ID_ANY,
-                                                        u"This label is a placeholder for a Panda3d window")
-        self.panda3d_editor_placeholder.Wrap(-1)
-        editor_panel_sizer.Add(self.panda3d_editor_placeholder, 0, wx.EXPAND|wx.ALL, 5)
-
         content_sizer.Add(self.editor_panel, 1, wx.EXPAND)
-
+        self.editor_panel.initialize()
         
         # Resources Pane
         resources_panel_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -126,7 +126,6 @@ class PanityFrame (wx.Frame):
 
         
         # Inspector Panel
-        
         self.inspector_panel = InspectorPanel(self.content_panel)
         content_sizer.Add(self.inspector_panel, 1, wx.EXPAND)
         
@@ -146,9 +145,11 @@ class PanityFrame (wx.Frame):
         self.mgr.Update()
 
 
+        #self.Centre(wx.BOTH)
 
-        self.Centre(wx.BOTH)        
-    
     def Destroy(self):
+        """Clean up the AUI Manager. Do not put this into an EVT_WINDOW_DESTROY event handler.
+        It won't work.
+        """
         self.mgr.Destroy()
-        super(PanityFrame, self).Destroy()
+        wx.Frame.Destroy(self)
