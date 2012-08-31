@@ -1,8 +1,8 @@
 from panity.xmlsceneparser import XMLSceneParser
 
-roots = XMLSceneParser.read("testscene1.xml")
+root = XMLSceneParser.read("testscene1.xml")
     
-for go in roots:
+for go in root:
     print go
     for child in go:
         print "- "+str(child)
