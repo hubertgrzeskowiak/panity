@@ -1,10 +1,4 @@
-import wx
-from panityframe import PanityFrame
+from editorapplication import EditorApplication
 
 if __name__ == "__main__":
-    app = wx.App()
-    
-    frame = PanityFrame(None)
-        
-    frame.Show()
-    app.MainLoop()
+    EditorApplication.run()
