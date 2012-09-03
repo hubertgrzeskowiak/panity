@@ -6,14 +6,9 @@ from inspectorpanel import InspectorPanel
 from pandaviewport import PandaViewport
 
 class PanityFrame(wx.Frame):
-    def __init__(self, parent):
-        wx.Frame.__init__ (self, parent, wx.ID_ANY, u"Panity Editor", wx.DefaultPosition, wx.Size(800,600),
+    def __init__(self):
+        wx.Frame.__init__ (self, None, wx.ID_ANY, u"Panity Editor", wx.DefaultPosition, wx.Size(800,600),
             wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL|wx.EXPAND, "panity main frame")
-
-        # This is necessary for any embedded windows, since we can't get a handle untiĺ the frame is shown
-        self.Show()
-        # TODO: Find out if there's an event for when the window is shown automatically.
-        #       By showing the window so soon we get some ugly layout flickering.
 
         self.SetTitle("Panity")
 
@@ -84,14 +79,12 @@ class PanityFrame(wx.Frame):
         self.game_panel = PandaViewport(self.content_panel)
         self.game_panel.SetMinSize(wx.Size(200,200))
         content_sizer.Add(self.game_panel, 1, wx.EXPAND)
-        self.game_panel.initialize()
 
         
         # Editor Pane
         self.editor_panel = PandaViewport(self.content_panel)
         self.editor_panel.SetMinSize(wx.Size(200,200))
         content_sizer.Add(self.editor_panel, 1, wx.EXPAND)
-        self.editor_panel.initialize()
         
         # Resources Pane
         resources_panel_sizer = wx.BoxSizer(wx.VERTICAL)

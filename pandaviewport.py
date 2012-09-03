@@ -11,7 +11,12 @@ class PandaViewport(wx.Panel):
     """A special Panel which holds a Panda3d window."""
     def __init__(self, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
-        self.Show()
+        self.GetTopLevelParent().Bind(wx.EVT_SHOW, self.onShow)
+
+    def onShow(self, event):
+        if event.GetShow() and self.GetHandle():
+            self.initialize()
+        event.Skip()
 
     def initialize(self):
         """This method requires the top most window to be visible, i.e. you called Show()
@@ -86,9 +91,9 @@ class Panda3dApp(object):
 
         base.taskMgr.add(self.checkPipe, "check pipe")
 
-        def printA():
-            print "'a' key recieved by panda"
-        base.accept("a", printA)
+        # def printA():
+        #     print "'a' key recieved by panda"
+        # base.accept("a", printA)
         base.accept("mouse1-up", self.getFocus)
 
         run()
@@ -133,3 +138,11 @@ class Panda3dApp(object):
             elif request[0] == "close":
                 sys.exit()
         return Task.cont
+
+# Test
+if __name__ == "__main__":
+    app = wx.App()
+    frame = wx.Frame(parent=None, size=wx.Size(500,500))
+    p = PandaViewport(parent=frame)
+    frame.Show()
+    app.MainLoop()

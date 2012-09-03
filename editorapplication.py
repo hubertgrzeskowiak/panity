@@ -8,6 +8,6 @@ class EditorApplication(object):
         app = wx.App()
         app.SetAppName("PandaEditor")
         app.SetClassName("PandaEditor")
-        frame = PanityFrame(None)
+        frame = PanityFrame()
         frame.Show()
         app.MainLoop()
