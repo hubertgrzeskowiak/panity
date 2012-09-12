@@ -1,6 +1,9 @@
 import sys
-import wx
+import os
 from multiprocessing import Process, Pipe
+
+import wx
+
 from direct.task import Task
 from pandac.PandaModules import WindowProperties
 from pandac.PandaModules import loadPrcFileData
@@ -11,11 +14,17 @@ class PandaViewport(wx.Panel):
     """A special Panel which holds a Panda3d window."""
     def __init__(self, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
+        # See __doc__ of initialize() for this callback
         self.GetTopLevelParent().Bind(wx.EVT_SHOW, self.onShow)
 
     def onShow(self, event):
         if event.GetShow() and self.GetHandle():
-            self.initialize()
+            # Windows can't get it right from here. Call it after this function.
+            if os.name == "nt":
+                wx.CallAfter(self.initialize)
+            # All other OSes should be okay with instant init.
+            else:
+                self.initialize()
         event.Skip()
 
     def initialize(self):
@@ -83,7 +92,8 @@ class Panda3dApp(object):
         wp = WindowProperties()
         wp.setOrigin(0, 0)
         wp.setSize(width, height)
-        wp.setForeground(True)
+        # This causes warnings on Windows
+        #wp.setForeground(True)
         wp.setParentWindow(handle)
         base.openDefaultWindow(props=wp, gsg=None)
 
@@ -110,7 +120,8 @@ class Panda3dApp(object):
         to take focus back.
         """
         wp = WindowProperties()
-        wp.setForeground(True)
+        # This causes warnings on Windows
+        #wp.setForeground(True)
         base.win.requestProperties(wp)
         self.pipe.send("focus")
 
@@ -141,8 +152,17 @@ class Panda3dApp(object):
 
 # Test
 if __name__ == "__main__":
-    app = wx.App()
+    app = wx.App(redirect=False)
     frame = wx.Frame(parent=None, size=wx.Size(500,500))
     p = PandaViewport(parent=frame)
+    t = wx.TextCtrl(parent=frame)
+    sizer = wx.FlexGridSizer(2, 1) # two rows, one column
+    sizer.AddGrowableRow(0) # make first row growable
+    sizer.AddGrowableCol(0) # make first column growable
+    sizer.SetFlexibleDirection(wx.BOTH)
+    sizer.SetNonFlexibleGrowMode(wx.FLEX_GROWMODE_SPECIFIED)
+    sizer.Add(p, flag=wx.EXPAND)
+    sizer.Add(t, flag=wx.EXPAND)
+    frame.SetSizer(sizer)
     frame.Show()
     app.MainLoop()
