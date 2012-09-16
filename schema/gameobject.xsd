@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema
+	xmlns:go="file://gameobject.xsd"
+	xmlns="http://www.w3.org/2001/XMLSchema"
+	targetNamespace="file://gameobject.xsd">
+<include schemaLocation="componenttype.xsd"/>
+<include schemaLocation="transform.xsd"/>
+<include schemaLocation="rigidbody.xsd"/>
+<include schemaLocation="boxcollider.xsd"/>
+<include schemaLocation="mesh.xsd"/>
+<include schemaLocation="behavior.xsd"/>
+
+<complexType name="GameobjectType">
+	<sequence>
+		<choice minOccurs="0" maxOccurs="unbounded">
+			<element name="transform" type="go:Transform" />
+			<element name="rigid_body" type="go:RigidBody" />
+			<element name="box_collider" type="go:BoxCollider" />
+			<element name="mesh" type="go:Mesh" />
+			<element name="behavior" type="go:Behavior" />
+		</choice>
+		<element name="gameobject" type="go:GameobjectType" minOccurs="0" maxOccurs="unbounded" />
+	</sequence>
+	<attribute name="name" type="ID" use="required" />
+	<attribute name="prefab" type="string" />
+</complexType>
+
+<element name="gameobject" type="go:GameobjectType" />
+
+</schema>

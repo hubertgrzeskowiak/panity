@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema
+	xmlns="http://www.w3.org/2001/XMLSchema"
+	xmlns:gt="file://generictypes.xsd"
+	targetNamespace="file://gameobject.xsd">
+
+<simpleType name="Vec3">
+	<restriction>
+		<simpleType>
+		  <list itemType="double"/>
+		</simpleType>
+		<length value="3"/>
+	</restriction>
+</simpleType>
+
+<simpleType name="Vec4">
+	<restriction>
+		<simpleType>
+		  <list itemType="double"/>
+		</simpleType>
+		<length value="4"/>
+	</restriction>
+</simpleType>
+
+</schema>

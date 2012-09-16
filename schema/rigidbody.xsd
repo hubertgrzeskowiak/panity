@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema
+	xmlns="http://www.w3.org/2001/XMLSchema"
+	xmlns:go="file://gameobject.xsd"
+	targetNamespace="file://gameobject.xsd">
+<include schemaLocation="componenttype.xsd" />
+	
+<complexType name="RigidBody">
+	<complexContent>
+		<extension base="go:ComponentType">
+			<all>
+				<element name="mass" type="float" />
+			</all>
+		</extension>
+	</complexContent>
+</complexType>
+
+</schema>

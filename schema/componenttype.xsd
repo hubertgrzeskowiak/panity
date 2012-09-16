@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema
+	xmlns:go="file://gameobject.xsd"
+	xmlns="http://www.w3.org/2001/XMLSchema"
+	targetNamespace="file://gameobject.xsd">
+
+<!-- Abstract component for subclassing in particular components -->
+<complexType name="ComponentType" abstract="true">
+	<attribute name="active" type="boolean" default="false" />
+</complexType>
+
+</schema>

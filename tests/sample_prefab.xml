@@ -1,24 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!-- this is an aeroplane prefab. you only need to pass a mesh source -->
-<gameobject name="aeroplane">
-    <component type="Mesh">
-    </component>
-    <component type="AudioSource">
-    </component>
-    <component type="Rigidbody">
-        <!-- default mass of 2000kg -->
-        <mass>2000</mass>
-    </component>
-    <!-- since we need multiple collision solids, these must be children -->
-    <gameobject name="collision body">
-        <component type="BoxCollider">
-            <center>0.0,-1.2,0.45</center>
-            <size>1.0,13.0,5.3</size>
-        </component>
+<go:gameobject name="aeroplane"
+	xmlns:go="file://gameobject.xsd"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="file://gameobject.xsd gameobject.xsd">
+	
+    <gameobject name="collision_body">
+        <box_collider>
+            <center>0.0 -1.2 0.45</center>
+            <size>1.0 13.0 5.3</size>
+        </box_collider>
     </gameobject>
-    <gameobject name="collision wings">
-        <component type="BoxCollider">
-            <center>0.0,-2.2,0.0</center>
-            <size>8.0,1.7,0.4</size>
-        </component>
+    <gameobject name="collision_wings">
+        <box_collider>
+            <center>0.0 -2.2 0.0</center>
+            <scale>8.0 1.7 0.4</scale>
+        </box_collider>
     </gameobject>
-</gameobject>
+</go:gameobject>

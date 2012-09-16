@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema
+	xmlns="http://www.w3.org/2001/XMLSchema"
+	xmlns:s="file://scene.xsd"
+	xmlns:go="file://gameobject.xsd"
+	targetNamespace="file://scene.xsd">
+<import namespace="file://gameobject.xsd" schemaLocation="gameobject.xsd"/>
+	
+<element name="scene">
+	<complexType>
+		<sequence>
+			<element name="gameobject" type="go:GameobjectType" minOccurs="0" maxOccurs="unbounded" />
+		</sequence>
+	</complexType>
+</element>
+
+</schema>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema
+	xmlns="http://www.w3.org/2001/XMLSchema"
+	xmlns:go="file://gameobject.xsd"
+	targetNamespace="file://gameobject.xsd">
+<include schemaLocation="componenttype.xsd" />
+<include schemaLocation="generictypes.xsd" />
+	
+<complexType name="BoxCollider">
+	<complexContent>
+		<extension base="go:ComponentType">
+			<all>
+				<element name="center" type="go:Vec3" default="0.0 0.0 0.0" minOccurs="0" />
+				<element name="scale" type="go:Vec3" default="0.0 0.0 0.0" minOccurs="0" />
+			</all>
+		</extension>
+	</complexContent>
+</complexType>
+
+</schema>

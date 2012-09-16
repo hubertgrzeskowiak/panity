@@ -1,14 +1,12 @@
 <scene>
     <gameobject name="ground">
-        <component type="DummyComponent">
-        </component>
-        <component type="DummyComponent">
-        </component>
+        <dummy_component />
+        <dummy_component>
+        </dummy_component>
     </gameobject>
     <gameobject name="house">
         <gameobject name="door">
-            <component type="DummyComponent">
-            </component>
+            <dummy_component />
         </gameobject>
     </gameobject>
     <gameobject name="something">
