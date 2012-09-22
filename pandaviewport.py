@@ -11,21 +11,11 @@ from direct.showbase.ShowBase import ShowBase
 
 
 class PandaViewport(wx.Panel):
-    """A special Panel which holds a Panda3d window."""
+    """A special Panel which holds an embedded Panda3d window."""
     def __init__(self, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
         # See __doc__ of initialize() for this callback
-        self.GetTopLevelParent().Bind(wx.EVT_SHOW, self.onShow)
-
-    def onShow(self, event):
-        if event.GetShow() and self.GetHandle():
-            # Windows can't get it right from here. Call it after this function.
-            if os.name == "nt":
-                wx.CallAfter(self.initialize)
-            # All other OSes should be okay with instant init.
-            else:
-                self.initialize()
-        event.Skip()
+        self.GetTopLevelParent().Bind(wx.EVT_SHOW, self._onShow)
 
     def initialize(self):
         """This method requires the top most window to be visible, i.e. you called Show()
@@ -35,38 +25,49 @@ class PandaViewport(wx.Panel):
         assert self.GetHandle() != 0
         self.pipe, remote_pipe = Pipe()
         w, h = self.ClientSize.GetWidth(), self.ClientSize.GetHeight()
-        self.panda_process = Process(target=Panda3dApp, args=(w, h, self.GetHandle(), remote_pipe))
+        self.panda_process = Process(target=EmbeddedPanda3dApp, args=(self.GetHandle(), remote_pipe, w, h))
         self.panda_process.start()
 
-        self.Bind(wx.EVT_SIZE, self.onResize)
-        self.Bind(wx.EVT_KILL_FOCUS, self.onDefocus)
-        self.Bind(wx.EVT_WINDOW_DESTROY, self.onDestroy)
+        self.Bind(wx.EVT_SIZE, self._onResize)
+        self.Bind(wx.EVT_KILL_FOCUS, self._onDefocus)
+        self.Bind(wx.EVT_WINDOW_DESTROY, self._onDestroy)
         self.SetFocus()
 
         # We need to check the pipe for requests frequently
-        self.pipe_timer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.checkPipe, self.pipe_timer)
-        self.pipe_timer.Start(1000.0/60) # 60 times a second
+        self._pipe_timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self._checkPipe, self._pipe_timer)
+        self._pipe_timer.Start(1000.0/60) # 60 times a second
 
-    def onResize(self, event):
+    def _onShow(self, event):
+        if event.GetShow() and self.GetHandle():
+            # Windows can't get it right from here. Call it after this function.
+            if os.name == "nt":
+                wx.CallAfter(self.initialize)
+            # All other OSes should be okay with instant init.
+            else:
+                self.initialize()
+        event.Skip()
+
+    def _onResize(self, event):
         # when the wx-panel is resized, fit the panda3d window into it
         w, h = event.GetSize().GetWidth(), event.GetSize().GetHeight()
-        self.pipe.send(["resize", w, h])
+        self.pipe.send(["resizeWindow", w, h])
+        self.GetTopLevelParent().Refresh()
  
-    def onDefocus(self, event):
+    def _onDefocus(self, event):
         f = wx.Window.FindFocus()
         if f:
             # This makes Panda lose keyboard focus
             f.GetTopLevelParent().Raise()
 
-    def onDestroy(self, event):
+    def _onDestroy(self, event):
         self.pipe.send(["close",])
         # Give Panda a second to close itself and terminate it if it doesn't
         self.panda_process.join(1)
         if self.panda_process.is_alive():
             self.panda_process.terminate()
 
-    def checkPipe(self, event):
+    def _checkPipe(self, event):
         # Panda requested focus (and probably already has keyboard focus), so make wx
         # set it officially. This prevents other widgets from being rendered focused.
         if self.pipe.poll():
@@ -75,8 +76,8 @@ class PandaViewport(wx.Panel):
                 self.SetFocus()
 
 
-class Panda3dApp(object):
-    def __init__(self, width, height, handle, pipe):
+class EmbeddedPanda3dApp(object):
+    def __init__(self, handle, pipe, width=300, height=300):
         """Arguments:
         width -- width of the window
         height -- height of the window
@@ -97,23 +98,16 @@ class Panda3dApp(object):
         wp.setParentWindow(handle)
         base.openDefaultWindow(props=wp, gsg=None)
 
-        self.loadSmiley()
+        # s = loader.loadModel("smiley.egg")
+        # s.reparentTo(render)
+        # s.setY(5)
 
-        base.taskMgr.add(self.checkPipe, "check pipe")
-
-        # def printA():
-        #     print "'a' key recieved by panda"
-        # base.accept("a", printA)
-        base.accept("mouse1-up", self.getFocus)
+        base.taskMgr.add(self._checkPipe, "check pipe")
+        base.accept("mouse1-up", self.focus)
 
         run()
 
-    def loadSmiley(self):
-        s = loader.loadModel("smiley.egg")
-        s.reparentTo(render)
-        s.setY(5)
-
-    def getFocus(self):
+    def focus(self):
         """Bring Panda3d to foreground, so that it gets keyboard focus.
         Also send a message to wx, so that it doesn't render a widget focused.
         We also need to say wx that Panda now has focus, so that it can notice when
@@ -134,20 +128,26 @@ class Panda3dApp(object):
         wp.setSize(width, height)
         base.win.requestProperties(wp)
 
-    def checkPipe(self, task):
-        """This task is responsible for executing actions requested by wxWidgets.
-        Currently supported requests with params:
-        resize, width, height
-        close
+    def close(self):
+        sys.exit()
+
+    def _checkPipe(self, task):
+        """This task is responsible for executing actions requested by
+        wxWidgets.
         """
-        # TODO: only use the last request of a type
-        #       e.g. from multiple resize requests take only the latest into account
+        def noSuchFunction(func, *args, **kwargs):
+            print "Panda App {} recieved an invalid request: {} {} {}".format(
+                  id(self), args, kwargs)
+        # TODO: maybe we should only use the last request of a type
+        #       e.g. from multiple resize requests take only the latest
+        #       into account
         while self.pipe.poll():
+            # the request is a function call to this object plus arguments,
+            # all in a list
             request = self.pipe.recv()
-            if request[0] == "resize":
-                self.resizeWindow(request[1], request[2])
-            elif request[0] == "close":
-                sys.exit()
+            func = getattr(self, request[0], None)
+            func = func or noSuchFunction
+            func(*request[1::])
         return Task.cont
 
 # Test
