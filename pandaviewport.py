@@ -89,7 +89,7 @@ class EmbeddedPanda3dApp(object):
         loadPrcFileData("", "window-type none")
         loadPrcFileData("", "audio-library-name null")
 
-        ShowBase()
+        self.base = ShowBase()
         wp = WindowProperties()
         wp.setOrigin(0, 0)
         wp.setSize(width, height)
@@ -98,14 +98,10 @@ class EmbeddedPanda3dApp(object):
         wp.setParentWindow(handle)
         base.openDefaultWindow(props=wp, gsg=None)
 
-        # s = loader.loadModel("smiley.egg")
-        # s.reparentTo(render)
-        # s.setY(5)
+        self.base.taskMgr.add(self._checkPipe, "check pipe")
+        self.base.accept("mouse1-up", self.focus)
 
-        base.taskMgr.add(self._checkPipe, "check pipe")
-        base.accept("mouse1-up", self.focus)
-
-        run()
+        self.base.run()
 
     def focus(self):
         """Bring Panda3d to foreground, so that it gets keyboard focus.
@@ -116,17 +112,17 @@ class EmbeddedPanda3dApp(object):
         wp = WindowProperties()
         # This causes warnings on Windows
         #wp.setForeground(True)
-        base.win.requestProperties(wp)
+        self.base.win.requestProperties(wp)
         self.pipe.send("focus")
 
     def resizeWindow(self, width, height):
-        old_wp = base.win.getProperties()
+        old_wp = self.base.win.getProperties()
         if old_wp.getXSize() == width and old_wp.getYSize() == height:
             return
         wp = WindowProperties()
         wp.setOrigin(0, 0)
         wp.setSize(width, height)
-        base.win.requestProperties(wp)
+        self.base.win.requestProperties(wp)
 
     def close(self):
         sys.exit()
@@ -145,9 +141,13 @@ class EmbeddedPanda3dApp(object):
             # the request is a function call to this object plus arguments,
             # all in a list
             request = self.pipe.recv()
+            if request[0].startswith("_"):
+                noSuchFunction()
             func = getattr(self, request[0], None)
-            func = func or noSuchFunction
-            func(*request[1::])
+            if func == None:
+                noSuchFunction(*request)
+            else:
+                func(*request[1::])
         return Task.cont
 
 # Test
