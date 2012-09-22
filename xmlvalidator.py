@@ -5,12 +5,18 @@ Whether a file is considered a scene or prefab depends on the root tag.
 Scenes should have 'scene' as root tag and prefabs 'gameobject'.
 """
 
+import os
 import sys
+import pkgutil
 try:
     from xml.etree import cElementTree as etree
 except ImportError:
     from xml.etree import ElementTree as etree
 
+import components as components_package
+# Find out what components we have
+_pkgpath = os.path.dirname(components_package.__file__)
+COMPONENT_MODULES = [name for _, name, _ in pkgutil.iter_modules([_pkgpath])]
 
 def validateScene(scene):
     """scene should be an xml element (-tree) of type scene."""
@@ -30,25 +36,18 @@ def validateGameObject(go):
         # either game objects or components
         if go_or_comp.tag == "gameobject":
             validateGameObject(go_or_comp)
-        elif go_or_comp.tag == "component":
+        else:
             validateComponent(go_or_comp)
-            if go_or_comp.get("type") in components:
+            if go_or_comp.tag in components:
                 print "".join(["WARNING! game object '{}' has the '{}' ",
                       "component multiple times!"]).format(
-                      go.get("name"), go_or_comp.get("type"))
-            components.append(go_or_comp.get("type"))
-
-        else:
-            raise AssertionError("a game object must contain game "+\
-                "objects and/or components only")
+                      go.get("name"), go_or_comp.tag)
+            components.append(go_or_comp.tag)
 
 def validateComponent(comp):
     """comp should be an xml element (-tree) of type component."""
-    assert comp.tag == "component", "component expected"
-    assert comp.get("type") is not None, "components must have a type attribute"
-    for tag in comp:
-        assert tag.tag not in ["gameobject", "component"], "components "+\
-            "must not contain game objects or components"
+    assert comp.tag in COMPONENT_MODULES
+    # For further validation, use xml schema
 
 def validate(anything):
     """Determine if we have a scene, game object or component and pass

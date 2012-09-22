@@ -1,8 +1,9 @@
 from panity.xmlsceneparser import XMLSceneParser
 
-print "you should now see warnings about multiple components in one game object"
+print "".join(["you should now see warnings about multiple components in one",
+               " game object and possibly some import errors"])
 print "-"*20
-roots = XMLSceneParser.read("testscene2.xml")
+roots = XMLSceneParser.read("testscene2.xml", validate=False)
 print "-"*20
 print "the scene with components:"
 for go in roots:
