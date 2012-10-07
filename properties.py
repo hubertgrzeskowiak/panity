@@ -55,6 +55,7 @@ class SerializedProperty(object):
             self.__invokeListeners(obj, value)
             return value
         except (AssertionError, ValueError):
+            print "warning, setting value "+str(value)+" on obj "+str(obj)+" not possible!"
             return False
 
     def __invokeListeners(self, obj, value):
@@ -167,8 +168,8 @@ class UnsignedIntegerProperty(IntegerProperty):
 
 
 class StringProperty(SerializedProperty):
-    def __init__(self):
-        SerializedProperty.__init__(self, default="")
+    def __init__(self, default=""):
+        SerializedProperty.__init__(self, default)
 
     def check(self, value):
         assert isinstance(value, str)
