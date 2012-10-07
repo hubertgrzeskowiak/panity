@@ -2,7 +2,9 @@ from object import Object
 from properties import SerializedProperty
 
 class Component(Object):
-    """Base class for everything that can be attached to game objects."""
+    """Base class for everything that can be attached to game objects.
+    You need to subclass this class for it to be useful.
+    """
 
     # These special attributes are mapped in __getattr__ to components.
     # That said you can write
@@ -19,14 +21,23 @@ class Component(Object):
         self.game_object = game_object
 
     @classmethod
-    def getSerializedProperties(cls):
-        """Return all special property attributes. Only attributes derived from
-        SerializedProperty are respected.
+    def getClassSerializedProperties(cls):
+        """Return all special property attributes in a dict. Only attributes
+        derived from SerializedProperty are respected.
         """
         d = {}
         for a, b in cls.__dict__.items():
             if isinstance(b, SerializedProperty):
                 d[a] = b
+        return d
+
+    def getSerializedProperties(self):
+        """Return all special property attributes' values in a dict.
+        Only attributes derived from SerializedProperty are respected.
+        """
+        d = {}
+        for p, v in type(self).getClassSerializedProperties().iteritems():
+            d[p] = v.getValue(self)
         return d
     
     def __getattr__(self, name):
