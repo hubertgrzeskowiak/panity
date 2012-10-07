@@ -26,10 +26,12 @@ def prettifyXML(xml_code):
     return xml.toprettyxml()
 
 
+# SCENE
+
 def getSceneFromXMLElement(element, root_name="scene", validate=True):
     root = GameObject(str(root_name))
     for xml_go in element:
-        go = getGameObjectFromXML(xml_go)
+        go = getGameObjectFromXMLElement(xml_go)
         go.transform.parent = root.transform
     return root
 
@@ -38,33 +40,37 @@ def getSceneFromXMLFile(filename, validate=True):
     root = filename.rsplit(".xml", 1)[0]
     return getSceneFromXMLElement(xml_scene, root, validate)
 
-def getSceneFromXML(xml, root_name="scene", validate=True):
-    return getSceneFromXMLElement(etree.fromstring(xml))
+def getSceneFromXML(xml_code, root_name="scene", validate=True):
+    return getSceneFromXMLElement(etree.fromstring(xml_code))
 
-def getGameObjectFromXML(xml):
-    """Create a game object from xml and append it as child of the parent
-    game object. This function calls itself recursively. Prefabs are loaded
-    using self.getGameObjectFromPrefab().
-    The xml parameter can be either a string, in which case it will be
-    parsed as xml or an etree.Element.
-    """
+def getXMLElementFromScene(scene):
+   raise NotImplementedError 
 
-    if isinstance(xml, str):
-        xml = etree.fromstring(xml)
+def getXMLFromScene(scene):
+    """Serialize a whole scene to xml code."""
+    raise NotImplementedError
 
+
+# GAME OBJECT
+
+def getGameObjectFromXML(xml_code):
+    xml_go = etree.fromstring(xml_code)
+    return getGameObjectFromXMLElement(xml_go)
+
+def getGameObjectFromXMLElement(element):
     # prefab means we should create an instance of a prefab and extend it
-    prefab = xml.get("prefab")
-    name = xml.get("name") or "unnamed"
+    prefab = element.get("prefab")
+    name = element.get("name") or "unnamed game object"
     if prefab:
-        go = getGameObjectFromPrefab(prefab, name)
+        go = getGameObjectFromPrefabFileName(prefab, name)
     else:
         # prefab attribute not set. Use a new game object
-        go = GameObject(name=name)
-    for go_or_comp in xml:
+        go = GameObject(name)
+    for go_or_comp in element:
         # a game object can contain game objects and components
         if go_or_comp.tag == "gameobject":
             xml_go = go_or_comp
-            child = getGameObjectFromXML(xml_go)
+            child = getGameObjectFromXMLElement(xml_go)
             child.parent = go
         else: # must be a component otherwise
             xml_comp = go_or_comp
@@ -87,34 +93,25 @@ def getGameObjectFromXML(xml):
     go.name = name
     return go
 
-def getGameObjectFromPrefab(prefab_source, name):
-    """Create a game object from a prefab, which corresponds to a
-    prefab file from the prefabs package or something.
-    """
+def getGameObjectFromPrefabFileName(filename):
     raise NotImplementedError
-    # TODO:
-    # import prefab
-    # instantiate it
-    # call Object.instantiate()
-    # or
-    # call PrefabUtility.getPrefabObject()
 
-def getXMLFromScene(scene,):
-    """Serialize a whole scene to xml code."""
-    #xml = ""
-    #xml += '<?xml version="1.0" encoding="UTF-8"?>'
-    pass
 
-def getXMLFromGameObject(game_object):
+def getXMLElementFromGameObject(game_object):
     xml = etree.Element("gameobject")
     xml.attrib["name"] = game_object.name
     for component in game_object.components.values():
-        xml.append(etree.fromstring(getXMLFromComponent(component)))
+        xml.append(getXMLElementFromComponent(component))
     for child in game_object:
-        xml.append(etree.fromstring(getXMLFromGameObject(child)))
-    return etree.tostring(xml)
+        xml.append(getXMLElementFromGameObject(child))
 
-def getXMLFromComponent(component):
+def getXMLFromGameObject(game_object):
+    return etree.tostring(getXMLElementFromGameObject(game_object))
+
+
+# COMPONENT
+
+def getXMLElementFromComponent(component):
     name = type(component).__name__
     name = util.camelToSnake(name)
     xml = etree.Element(name)
@@ -122,4 +119,6 @@ def getXMLFromComponent(component):
         child = etree.Element(util.camelToSnake(p))
         child.text = str(v)
         xml.append(child)
-    return etree.tostring(xml)
+
+def getXMLFromComponent(component):
+    return etree.tostring(getXMLElementFromComponent(component))
