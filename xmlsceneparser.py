@@ -3,6 +3,8 @@ try:
 except ImportError:
     from xml.etree import ElementTree as etree
 
+import types
+import collections
 import os.path
 import pkgutil
 
@@ -47,7 +49,7 @@ def getSceneFromXML(xml_code, root_name="scene", validate=True):
 
 
 def getXMLElementFromScene(scene):
-   raise NotImplementedError 
+    raise NotImplementedError 
 
 def getXMLFromScene(scene):
     """Serialize a whole scene to xml code."""
@@ -76,24 +78,7 @@ def getGameObjectFromXMLElement(element):
             child = getGameObjectFromXMLElement(xml_go)
             child.parent = go
         else: # must be a component otherwise
-            xml_comp = go_or_comp
-            # does the GO already have such a component?
-            comp = go.getComponent(xml_comp.get(xml_comp.tag))
-            if not comp:
-                # if not, create it
-                try:
-                    comp = go.addComponent(xml_comp.tag)
-                except ImportError, e:
-                     print "".join(["Importing component {} failed! ",
-                                   "Skipping."]).format(xml_comp.tag)
-            else:
-                print "".join(["second appearence of component '{}' ",
-                               "in game object '{}' ignored"]).format(
-                               xml_comp.tag, go.name)
-            for option in xml_comp:
-                setattr(comp, option, option.text)
-
-    go.name = name
+            getComponentFromXMLElement(go_or_comp, go)
     return go
 
 def getGameObjectFromPrefabFileName(filename):
@@ -116,13 +101,46 @@ def getXMLFromGameObject(game_object):
 
 # COMPONENT
 
+def getComponentFromXMLElement(element, game_object):
+    # does the GO already have such a component?
+    comp = game_object.getComponent(util.snakeToCamel(element.tag))
+    if not comp:
+        # if not, create it
+        try:
+            comp = game_object.addComponent(util.snakeToCamel(element.tag))
+        except ImportError, e:
+             print "".join(["Importing component {} failed! ",
+                           "Skipping."]).format(element.tag)
+             return
+
+
+    for option in element:
+        # check if it might be an array of numbers
+        if option.text is None:
+            continue
+        str_nums = option.text.split(" ")
+        try:
+            nums = map(float, str_nums)
+        except ValueError:
+            # couldn't convert strings to numbers. it must be a str
+            setattr(comp, option.tag, option.text)
+        else:
+            # conversion to a floats was successful, assign them as
+            # list of floats
+            setattr(comp, option.tag, nums)
+
 def getXMLElementFromComponent(component):
     name = type(component).__name__
     name = util.camelToSnake(name)
     xml = etree.Element(name)
     for p, v in component.getSerializedProperties().iteritems():
         child = etree.Element(util.camelToSnake(p))
-        child.text = str(v)
+        if type(v) in types.StringTypes:
+            child.text = str(v)
+        elif isinstance(v, list):
+            child.text = str(v).replace("[","").replace("]","").replace(",","")
+        else:
+            child.text = str(v)
         xml.append(child)
     return xml
 

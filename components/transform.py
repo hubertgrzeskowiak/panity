@@ -1,18 +1,42 @@
-from panity.component import Component
 from panda3d.core import NodePath
+
+from panity.component import Component
+from panity.properties import *
 
 class Transform(Component):
     """Each game object has exactly one of these. A transform holds data
-    about position, rotation, scale but also parent and child relationships.
+    about position, rotation, scale and parent relationship.
     
     In Panity this is a wrapper for a NodePath.
     """
-    def __init__(self, game_object):
+
+    def __init__(self, game_object, name):
         # Component class sets self.game_object = game_object
         Component.__init__(self, game_object)
-        self.node = NodePath(game_object.name)
+        self.node = NodePath(name)
         self.node.setPythonTag("transform", self)
-        self.root = self
+
+    @classmethod
+    def getClassSerializedProperties(cls):
+        """Return all special property attributes in a dict. Only attributes
+        derived from SerializedProperty are respected.
+
+        On transform this method is not supported!
+        """
+        # The Transform component is special in that it doesn't use any
+        # serialized properties, but a NodePath. We need a node path anyway,
+        # and this way it's faster than using serialized properties as wrappers
+        # for the node path.
+        # TODO: overthink this for GUI
+        raise NotImplementedError
+
+    def getSerializedProperties(self):
+        """Return all properties for serialization."""
+        d = {}
+        d["local_position"] = self.local_position
+        d["local_euler_angles"] = self.local_euler_angles
+        d["local_scale"] = self.local_scale
+        return d
 
     # We use the panda node to save the name on it for better debugging and
     # efficient finding of nodes with NodePath().find()
@@ -21,67 +45,76 @@ class Transform(Component):
         return self.node.getName()
     @name.setter
     def name(self, name):
+        if name == "render":
+            name = "_render"
         self.node.setName(name)
 
     @property
     def position(self):
-        return self.node.getPos(self.root.node)
+        return [i for i in self.node.getPos(self.root.node)]
     @position.setter
     def position(self, position):
-        self.node.setPos(self.root.node, position)
+        self.node.setPos(self.root.node, *position)
     
     @property
     def local_position(self):
-        return self.node.getPos()
+        return [i for i in self.node.getPos()]
     @local_position.setter
     def local_position(self, position):
-        self.node.setPos(position)
+        self.node.setPos(*position)
 
     @property
     def euler_angles(self):
-        return self.node.getHpr(self.root.node)
+        return [i for i in self.node.getHpr(self.root.node)]
     @euler_angles.setter
     def euler_angles(self, angles):
-        self.node.setHpr(self.root.node, angles)
+        self.node.setHpr(self.root.node, *angles)
     
     @property
     def local_euler_angles(self):
-        return self.node.getHpr()
+        return [i for i in self.node.getHpr()]
     @local_euler_angles.setter
     def local_euler_angles(self, angles):
-        self.node.setHpr(angles)
+        self.node.setHpr(*angles)
     
     @property
     def rotation(self):
-        return self.node.getQuat(self.root.node)
+        return [i for i in self.node.getQuat(self.root.node)]
     @rotation.setter
     def rotation(self, quaternion):
-        self.node.setQuat(self.root.node, quaternion)
+        self.node.setQuat(self.root.node, *quaternion)
 
     @property
     def local_rotation(self):
-        return self.node.getQuat()
+        return [i for i in self.node.getQuat()]
     @local_rotation.setter
     def local_rotation(self, quaternion):
-        self.node.setQuat(quaternion)
+        self.node.setQuat(*quaternion)
 
     @property
     def local_scale(self):
-        return self.node.getScale()
+        return [i for i in self.node.getScale()]
     @local_scale.setter
     def local_scale(self, scale):
-        self.node.setScale(scale)
+        self.node.setScale(*scale)
 
     @property
     def parent(self):
         p = self.node.getParent()
-        if p.getName() == "render":
+        if p.isEmpty() or p.getName() == "render":
             return self
         elif p.hasPythonTag("transform"):
             return p.getPythonTag("transform")
     @parent.setter
     def parent(self, parent):
         self.node.wrtReparentTo(parent.node)
+
+    @property
+    def root(self):
+        if self.parent is not self:
+            return self.parent.root()
+        else:
+            return self
     
     def destroy(self):
         """Ultimately remove this transform. Warning: this might cause errors
@@ -91,7 +124,7 @@ class Transform(Component):
 
     def getChildren(self):
         """Return children as Transforms."""
-        # this requires the following method __iter__
+        # this requires the __iter__() method
         return [c for c in self]
 
     def __iter__(self):

@@ -18,7 +18,11 @@ class Component(Object):
 
     def __init__(self, game_object):
         Object.__init__(self)
+        # add the component to the game object's components dict
+        assert not game_object.components.has_key(type(self).__name__)
+        game_object.components[type(self).__name__] = self
         self.game_object = game_object
+
 
     @classmethod
     def getClassSerializedProperties(cls):
