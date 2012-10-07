@@ -74,7 +74,11 @@ class Transform(Component):
 
     @property
     def parent(self):
-        return self.node.getParent()
+        p = self.node.getParent()
+        if p.getName() == "render":
+            return self
+        elif p.hasPythonTag("transform"):
+            return p.getPythonTag("transform")
     @parent.setter
     def parent(self, parent):
         self.node.wrtReparentTo(parent.node)
