@@ -17,6 +17,8 @@ import util
 _pkgpath = os.path.dirname(components_package.__file__)
 COMPONENT_MODULES = [name for _, name, _ in pkgutil.iter_modules([_pkgpath])]
 
+# UTILITY STUFF
+
 def prettifyXML(xml_code):
     """Pass it some xml in string and it will return a nicely formatted
     version. The content will stay exactly the same.
@@ -42,6 +44,7 @@ def getSceneFromXMLFile(filename, validate=True):
 
 def getSceneFromXML(xml_code, root_name="scene", validate=True):
     return getSceneFromXMLElement(etree.fromstring(xml_code))
+
 
 def getXMLElementFromScene(scene):
    raise NotImplementedError 
@@ -119,6 +122,7 @@ def getXMLElementFromComponent(component):
         child = etree.Element(util.camelToSnake(p))
         child.text = str(v)
         xml.append(child)
+    return xml
 
 def getXMLFromComponent(component):
     return etree.tostring(getXMLElementFromComponent(component))
