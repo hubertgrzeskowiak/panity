@@ -1,6 +1,6 @@
 from panity.xmlsceneparser import XMLSceneParser
 
-root = XMLSceneParser.read("testscene1.xml")
+root = XMLSceneParser.getSceneFromXML("testscene1.xml")
     
 for go in root:
     print go
