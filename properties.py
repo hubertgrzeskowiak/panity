@@ -19,6 +19,9 @@ class SerializedProperty(object):
         else:
             return self.default
 
+    def getValue(self, obj):
+        return self.__get__(obj)
+
     def __set__(self, obj, value):
         """Set a property on an object.
         If the new value is same as current, no checks are run and the value
