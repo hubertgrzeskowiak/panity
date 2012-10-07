@@ -107,9 +107,11 @@ def getXMLElementFromGameObject(game_object):
         xml.append(getXMLElementFromComponent(component))
     for child in game_object:
         xml.append(getXMLElementFromGameObject(child))
+    return xml 
 
 def getXMLFromGameObject(game_object):
-    return etree.tostring(getXMLElementFromGameObject(game_object))
+    xml_element = getXMLElementFromGameObject(game_object)
+    return etree.tostring(xml_element)
 
 
 # COMPONENT
