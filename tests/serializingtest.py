@@ -1,7 +1,7 @@
 from panity.gameobject import GameObject
 from panity.component import Component
 from panity.properties import *
-from panity.xmlsceneparser import *
+from panity.xmlparser import *
 
 
 go = GameObject("my new game object")

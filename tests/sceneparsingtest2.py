@@ -1,4 +1,4 @@
-from panity.xmlsceneparser import getSceneFromXMLFile
+from panity.xmlparser import getSceneFromXMLFile
 
 print "".join(["you should now see warnings about multiple components in one",
                " game object and possibly some import errors"])

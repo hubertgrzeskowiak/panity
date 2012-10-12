@@ -1,4 +1,4 @@
-from panity.xmlsceneparser import getSceneFromXML
+from panity.xmlparser import getSceneFromXML
 
 xml = """
 <scene>

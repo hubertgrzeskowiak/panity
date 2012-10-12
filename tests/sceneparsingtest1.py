@@ -1,4 +1,4 @@
-from panity.xmlsceneparser import getSceneFromXMLFile
+from panity.xmlparser import getSceneFromXMLFile
 
 root = getSceneFromXMLFile("testscene1.xml")
     
