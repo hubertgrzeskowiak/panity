@@ -21,14 +21,14 @@ class Transform(Component):
         """Return all special property attributes in a dict. Only attributes
         derived from SerializedProperty are respected.
 
-        On transform this method is not supported!
+        On transform component this method always returns local position,
+        -rotation and scale only.
         """
-        # The Transform component is special in that it doesn't use any
-        # serialized properties, but a NodePath. We need a node path anyway,
-        # and this way it's faster than using serialized properties as wrappers
-        # for the node path.
-        # TODO: overthink this for GUI
-        raise NotImplementedError
+        d = {}
+        d["local_position"] = Transform.local_position
+        d["local_euler_angles"] = Transform.local_euler_angles
+        d["local_scale"] = Transform.local_scale
+        return d
 
     def getSerializedProperties(self):
         """Return all properties for serialization. In the case of transform

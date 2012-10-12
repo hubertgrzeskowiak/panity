@@ -5,7 +5,66 @@ These are used to
 3. choose the right GUI widgets in the editor
 """
 
-class SerializedProperty(object):
+# I think making this optional this module gets more reusable
+try:
+    from panda3d.core import VBase2, VBase3, VBase4
+except ImportError:
+    print "".join(["importing Panda3d classes failed. Marshalling those ",
+                   "might be a bad idea"])
+
+
+class PropertyBase(object):
+    """This is the base class of SerializedProperty and
+    SerializedPropertyDecorator that contains methods they both use.
+    Not really usable as standalone.
+    """
+    def _invokeListeners(self, obj, value):
+        if hasattr(obj, "_listeners") and self in obj._listeners:
+            for f in obj._listeners[self]:
+                f(value)
+
+    def addListener(self, obj, function):
+        """Add a callback function that is called every time the value is
+        effectively changed. The new value is passed as argument.
+        obj is the object this property should be watched on.
+        """
+        if not hasattr(obj, "_listeners"):
+            obj._listeners = {}
+            obj._listeners[self] = []
+        elif not obj._listeners.has_key(self):
+            obj._listeners[self] = []
+        obj._listeners[self].append(function)
+
+    def removeListener(self, obj, function):
+        """Reverse of addListener."""
+        obj._listeners[self].remove(function)
+
+    def removeAllListeners(self, obj):
+        obj._listeners.pop(self, None)
+
+    def getValue(self, obj):
+        return self.__get__(obj)
+
+    def toXML(self, value):
+        """Convert the given value in a way so that it can be stored in XML.
+        This is in particular useful for lists and list-like types which are
+        written to xml as single items separated by spaces.
+
+        You can override this method in derived classes if required.
+        """
+        if isinstance(value, (tuple, list)):
+            return " ".join(map(str, value))
+        try:
+            # do the same with vectors and points, but pass silently
+            # if we don't have these types here
+            if isinstance(value, (VBase2, VBase3, VBase4)):
+                return " ".join(map(str, value))
+        except NameError:
+            pass
+        return str(value)
+
+
+class SerializedProperty(PropertyBase):
     """The SerializedProperty is meant to be initiated as a class attribute,
     where it serves as both class- and instance attribute.
     From the point of view of the object it behaves like a usual int, float,
@@ -38,9 +97,6 @@ class SerializedProperty(object):
         else:
             return self.default
 
-    def getValue(self, obj):
-        return self.__get__(obj)
-
     def __set__(self, obj, value):
         """Set a property on an object.
         If the new value is same as current, no checks are run and the value
@@ -61,7 +117,7 @@ class SerializedProperty(object):
         try:
             self.check(value)
             obj._properties[self] = value
-            self.__invokeListeners(obj, value)
+            self._invokeListeners(obj, value)
             return value
         except AssertionError:
             pass
@@ -70,35 +126,11 @@ class SerializedProperty(object):
             value = self.convert(value)
             self.check(value)
             obj._properties[self] = value
-            self.__invokeListeners(obj, value)
+            self._invokeListeners(obj, value)
             return value
         except (AssertionError, ValueError) as e:
             print "warning, setting value "+str(value)+" on obj "+str(obj)+" not possible!"
             return False
-
-    def __invokeListeners(self, obj, value):
-        if hasattr(obj, "_listeners") and self in obj._listeners:
-            for f in obj._listeners[self]:
-                f(value)
-
-    def addListener(self, obj, function):
-        """Add a callback function that is called every time the value is
-        effectively changed. The new value is passed as argument.
-        obj is the object this property should be watched on.
-        """
-        if not hasattr(obj, "_listeners"):
-            obj._listeners = {}
-            obj._listeners[self] = []
-        elif not obj._listeners.has_key(self):
-            obj._listeners[self] = []
-        obj._listeners[self].append(function)
-
-    def removeListener(self, obj, function):
-        """Reverse of addListener."""
-        obj._listeners[self].remove(function)
-
-    def removeAllListeners(self, obj):
-        obj._listeners.pop(self, None)
 
     def check(self, value):
         """Check a potential value for its correctness and optionally type.
@@ -202,8 +234,9 @@ class PathProperty(StringProperty):
     pass
 
 
-class SerializedPropertyDecorator(property):
-    """Use this SerializedProperty if you need your own getter and setter.
+
+class SerializedPropertyDecorator(property, PropertyBase):
+    """Use this SerializedProperty if you need own getter and setter.
     This class tries to behave same as SerializedProperty except for checks
     and convertion.
     This class is mainly used by the transform component, as it stores
@@ -212,7 +245,7 @@ class SerializedPropertyDecorator(property):
     def __init__(self, fget=None, fset=None, fdel=None, doc=None):
 
         def decorated(obj, value):
-            self.__invokeListeners(obj, value);
+            self._invokeListeners(obj, value);
             fset(obj, value)
 
         super(SerializedPropertyDecorator, self).__init__(
@@ -220,30 +253,3 @@ class SerializedPropertyDecorator(property):
             decorated,
             fdel,
             doc)
-
-    def getValue(self, obj):
-        return self.__get__(obj)
-
-    def __invokeListeners(self, obj, value):
-        if hasattr(obj, "_listeners") and self in obj._listeners:
-            for f in obj._listeners[self]:
-                f(value)
-
-    def addListener(self, obj, function):
-        """Add a callback function that is called every time the value is
-        effectively changed. The new value is passed as argument.
-        obj is the object this property should be watched on.
-        """
-        if not hasattr(obj, "_listeners"):
-            obj._listeners = {}
-            obj._listeners[self] = []
-        elif not obj._listeners.has_key(self):
-            obj._listeners[self] = []
-        obj._listeners[self].append(function)
-
-    def removeListener(self, obj, function):
-        """Reverse of addListener."""
-        obj._listeners[self].remove(function)
-
-    def removeAllListeners(self, obj):
-        obj._listeners.pop(self, None)
