@@ -1,15 +1,34 @@
 """This module describes attributes components can have.
 These are used to
-1. validate xml files that try to set components' values and
-2. choose the right GUI widgets in the editor
+1. marshal and unmarshal to and from xml
+2. validate assignment of component attributes
+3. choose the right GUI widgets in the editor
 """
 
 class SerializedProperty(object):
+    """The SerializedProperty is meant to be initiated as a class attribute,
+    where it serves as both class- and instance attribute.
+    From the point of view of the object it behaves like a usual int, float,
+    string or other value, but under the hood it offers validation,
+    converting and callbacks on change.
+
+    It behaves a bit like the python-own property class, but in contrast
+    it doesn't allow explicit assignment of getter and setter etc.
+
+    This is the base class which doesn't offer any checks or validation.
+    Better use the specialized subclasses instead.
+
+    See the test files, especially serializingtest.py for usage examples.
+    """
     def __init__(self, default=None):
+        """default value is used as initial value."""
         self.default = default
         self.listeners = {}
 
     def __get__(self, obj, cls=None):
+        """Return a value when called on object or SerializedProperty instance
+        when called on class.
+        """
         if obj is None:
             # property called on class level. return a nice object
             return self
@@ -38,7 +57,6 @@ class SerializedProperty(object):
         elif obj._properties.has_key(self) and value == obj._properties[self]:
                 # new value is same as old one
                 return value
-
         # check the given value
         try:
             self.check(value)
@@ -54,13 +72,13 @@ class SerializedProperty(object):
             obj._properties[self] = value
             self.__invokeListeners(obj, value)
             return value
-        except (AssertionError, ValueError):
+        except (AssertionError, ValueError) as e:
             print "warning, setting value "+str(value)+" on obj "+str(obj)+" not possible!"
             return False
 
     def __invokeListeners(self, obj, value):
-        if obj in self.listeners:
-            for f in self.listeners[obj]:
+        if hasattr(obj, "_listeners") and self in obj._listeners:
+            for f in obj._listeners[self]:
                 f(value)
 
     def addListener(self, obj, function):
@@ -68,17 +86,19 @@ class SerializedProperty(object):
         effectively changed. The new value is passed as argument.
         obj is the object this property should be watched on.
         """
-        if not self.listeners.has_key(obj):
-            self.listeners[obj] = []
-        self.listeners[obj].append(function)
+        if not hasattr(obj, "_listeners"):
+            obj._listeners = {}
+            obj._listeners[self] = []
+        elif not obj._listeners.has_key(self):
+            obj._listeners[self] = []
+        obj._listeners[self].append(function)
 
     def removeListener(self, obj, function):
         """Reverse of addListener."""
-        if self.listeners.has_key(obj):
-            self.listeners[obj].remove(function)
+        obj._listeners[self].remove(function)
 
     def removeAllListeners(self, obj):
-        self.listeners.pop(obj, None)
+        obj._listeners.pop(self, None)
 
     def check(self, value):
         """Check a potential value for its correctness and optionally type.
@@ -180,3 +200,50 @@ class StringProperty(SerializedProperty):
 
 class PathProperty(StringProperty):
     pass
+
+
+class SerializedPropertyDecorator(property):
+    """Use this SerializedProperty if you need your own getter and setter.
+    This class tries to behave same as SerializedProperty except for checks
+    and convertion.
+    This class is mainly used by the transform component, as it stores
+    its property values on a nodepath.
+    """
+    def __init__(self, fget=None, fset=None, fdel=None, doc=None):
+
+        def decorated(obj, value):
+            self.__invokeListeners(obj, value);
+            fset(obj, value)
+
+        super(SerializedPropertyDecorator, self).__init__(
+            fget,
+            decorated,
+            fdel,
+            doc)
+
+    def getValue(self, obj):
+        return self.__get__(obj)
+
+    def __invokeListeners(self, obj, value):
+        if hasattr(obj, "_listeners") and self in obj._listeners:
+            for f in obj._listeners[self]:
+                f(value)
+
+    def addListener(self, obj, function):
+        """Add a callback function that is called every time the value is
+        effectively changed. The new value is passed as argument.
+        obj is the object this property should be watched on.
+        """
+        if not hasattr(obj, "_listeners"):
+            obj._listeners = {}
+            obj._listeners[self] = []
+        elif not obj._listeners.has_key(self):
+            obj._listeners[self] = []
+        obj._listeners[self].append(function)
+
+    def removeListener(self, obj, function):
+        """Reverse of addListener."""
+        obj._listeners[self].remove(function)
+
+    def removeAllListeners(self, obj):
+        obj._listeners.pop(self, None)

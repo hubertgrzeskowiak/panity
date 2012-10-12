@@ -1,7 +1,7 @@
 from panda3d.core import NodePath
 
 from panity.component import Component
-from panity.properties import *
+from panity.properties import SerializedPropertyDecorator
 
 class Transform(Component):
     """Each game object has exactly one of these. A transform holds data
@@ -43,7 +43,7 @@ class Transform(Component):
 
     # We use the panda node to save the name on it for better debugging and
     # efficient finding of nodes with NodePath().find()
-    @property
+    @SerializedPropertyDecorator
     def name(self):
         return self.node.getName()
     @name.setter
@@ -52,56 +52,56 @@ class Transform(Component):
             name = "_render"
         self.node.setName(name)
 
-    @property
+    @SerializedPropertyDecorator
     def position(self):
         return self.node.getPos(self.root.node)
     @position.setter
     def position(self, position):
         self.node.setPos(self.root.node, *position)
     
-    @property
+    @SerializedPropertyDecorator
     def local_position(self):
         return self.node.getPos()
     @local_position.setter
     def local_position(self, position):
         self.node.setPos(*position)
 
-    @property
+    @SerializedPropertyDecorator
     def euler_angles(self):
         return self.node.getHpr(self.root.node)
     @euler_angles.setter
     def euler_angles(self, angles):
         self.node.setHpr(self.root.node, *angles)
     
-    @property
+    @SerializedPropertyDecorator
     def local_euler_angles(self):
         return self.node.getHpr()
     @local_euler_angles.setter
     def local_euler_angles(self, angles):
         self.node.setHpr(*angles)
     
-    @property
+    @SerializedPropertyDecorator
     def rotation(self):
         return self.node.getQuat(self.root.node)
     @rotation.setter
     def rotation(self, quaternion):
         self.node.setQuat(self.root.node, *quaternion)
 
-    @property
+    @SerializedPropertyDecorator
     def local_rotation(self):
         return self.node.getQuat()
     @local_rotation.setter
     def local_rotation(self, quaternion):
         self.node.setQuat(*quaternion)
 
-    @property
+    @SerializedPropertyDecorator
     def local_scale(self):
         return self.node.getScale()
     @local_scale.setter
     def local_scale(self, scale):
         self.node.setScale(*scale)
 
-    @property
+    @SerializedPropertyDecorator
     def parent(self):
         p = self.node.getParent()
         if p.isEmpty() or p.getName() == "render":
@@ -112,7 +112,7 @@ class Transform(Component):
     def parent(self, parent):
         self.node.wrtReparentTo(parent.node)
 
-    @property
+    @SerializedPropertyDecorator
     def root(self):
         if self.parent is not self:
             return self.parent.root()
