@@ -4,8 +4,10 @@ from panity.properties import *
 from panity.xmlsceneparser import *
 
 
-go = GameObject()
-go.addComponent("Mesh")
+go = GameObject("my new game object")
+go.transform.local_position = [1.5, 5, 5]
+mesh = go.addComponent("Mesh")
+mesh.path = "smiley"
 xml = getXMLFromGameObject(go)
 print prettifyXML(xml)
 
