@@ -8,7 +8,18 @@ class Mesh(Component):
 
     def __init__(self, game_object):
         Component.__init__(self, game_object)
+        Mesh.path.addListener(self, self.reloadModel)
+        self.model = None
 
+    def reloadModel(self, path):
+        if path == "" and self.model is not None:
+                self.model.removeNode()
+                self.model = None
+        else:
+            try:
+                self.model = loader.loadModel(path)
+            except NameError:
+                pass
 
 # Test
 if __name__ == "__main__":
