@@ -31,7 +31,10 @@ class Transform(Component):
         raise NotImplementedError
 
     def getSerializedProperties(self):
-        """Return all properties for serialization."""
+        """Return all properties for serialization. In the case of transform
+        this only returns local position, -rotation and -scale, which are
+        required to restore the state of the node.
+        """
         d = {}
         d["local_position"] = self.local_position
         d["local_euler_angles"] = self.local_euler_angles
