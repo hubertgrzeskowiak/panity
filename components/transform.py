@@ -51,49 +51,49 @@ class Transform(Component):
 
     @property
     def position(self):
-        return [i for i in self.node.getPos(self.root.node)]
+        return self.node.getPos(self.root.node)
     @position.setter
     def position(self, position):
         self.node.setPos(self.root.node, *position)
     
     @property
     def local_position(self):
-        return [i for i in self.node.getPos()]
+        return self.node.getPos()
     @local_position.setter
     def local_position(self, position):
         self.node.setPos(*position)
 
     @property
     def euler_angles(self):
-        return [i for i in self.node.getHpr(self.root.node)]
+        return self.node.getHpr(self.root.node)
     @euler_angles.setter
     def euler_angles(self, angles):
         self.node.setHpr(self.root.node, *angles)
     
     @property
     def local_euler_angles(self):
-        return [i for i in self.node.getHpr()]
+        return self.node.getHpr()
     @local_euler_angles.setter
     def local_euler_angles(self, angles):
         self.node.setHpr(*angles)
     
     @property
     def rotation(self):
-        return [i for i in self.node.getQuat(self.root.node)]
+        return self.node.getQuat(self.root.node)
     @rotation.setter
     def rotation(self, quaternion):
         self.node.setQuat(self.root.node, *quaternion)
 
     @property
     def local_rotation(self):
-        return [i for i in self.node.getQuat()]
+        return self.node.getQuat()
     @local_rotation.setter
     def local_rotation(self, quaternion):
         self.node.setQuat(*quaternion)
 
     @property
     def local_scale(self):
-        return [i for i in self.node.getScale()]
+        return self.node.getScale()
     @local_scale.setter
     def local_scale(self, scale):
         self.node.setScale(*scale)

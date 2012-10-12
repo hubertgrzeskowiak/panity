@@ -3,10 +3,10 @@ try:
 except ImportError:
     from xml.etree import ElementTree as etree
 
-import types
-import collections
 import os.path
 import pkgutil
+
+from panda3d.core import VBase2, VBase3, VBase4
 
 from parserinterface import ParserInterface
 from xmlvalidator import validateScene
@@ -135,10 +135,8 @@ def getXMLElementFromComponent(component):
     xml = etree.Element(name)
     for p, v in component.getSerializedProperties().iteritems():
         child = etree.Element(util.camelToSnake(p))
-        if type(v) in types.StringTypes:
-            child.text = str(v)
-        elif isinstance(v, list):
-            child.text = str(v).replace("[","").replace("]","").replace(",","")
+        if isinstance(v, (tuple, list, VBase2, VBase3, VBase4)):
+            child.text = " ".join(map(str, v))
         else:
             child.text = str(v)
         xml.append(child)
