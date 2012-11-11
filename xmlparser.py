@@ -133,12 +133,9 @@ def getXMLElementFromComponent(component):
     name = type(component).__name__
     name = util.camelToSnake(name)
     xml = etree.Element(name)
-    for p, v in component.getSerializedProperties().iteritems():
+    for p, v in type(component).getClassSerializedProperties().iteritems():
         child = etree.Element(util.camelToSnake(p))
-        if isinstance(v, (tuple, list, VBase2, VBase3, VBase4)):
-            child.text = " ".join(map(str, v))
-        else:
-            child.text = str(v)
+        child.text =  v.toXML(v.getValue(component))
         xml.append(child)
     return xml
 

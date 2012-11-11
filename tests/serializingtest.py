@@ -8,6 +8,7 @@ go = GameObject("my new game object")
 go.transform.local_position = [1.5, 5, 5]
 mesh = go.addComponent("Mesh")
 mesh.path = "smiley"
+mesh.path = "frowney"
 xml = getXMLFromGameObject(go)
 print prettifyXML(xml)
 

@@ -18,6 +18,8 @@ import components as components_package
 _pkgpath = os.path.dirname(components_package.__file__)
 COMPONENT_MODULES = [name for _, name, _ in pkgutil.iter_modules([_pkgpath])]
 
+# TODO: make this module use xml schema (XSD) through lxml
+
 def validateScene(scene):
     """scene should be an xml element (-tree) of type scene."""
     # root tag needs to be a "scene"
