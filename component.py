@@ -23,6 +23,10 @@ class Component(Object):
         game_object.components[type(self).__name__] = self
         self.game_object = game_object
 
+    def destroy(self):
+        """Clean up. This method can be overridden in subclasses."""
+        pass
+
 
     @classmethod
     def getClassSerializedProperties(cls):

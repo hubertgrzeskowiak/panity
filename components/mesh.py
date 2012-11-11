@@ -18,8 +18,13 @@ class Mesh(Component):
         else:
             try:
                 self.model = loader.loadModel(path)
-            except NameError:
-                pass
+            except NameError: # loader not available
+                print "error. no loader"
+            else:
+                self.model.reparentTo(self.game_object.transform.node)
+
+    def destroy(self):
+        self.model.removeNode()
 
 # Test
 if __name__ == "__main__":

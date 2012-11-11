@@ -121,7 +121,8 @@ class Transform(Component):
     
     def destroy(self):
         """Ultimately remove this transform. Warning: this might cause errors
-        for other components on this game object.
+        for other components on this game object. Use this only when removing
+        the whole GameObject.
         """
         self.node.removeNode()
 

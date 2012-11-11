@@ -63,3 +63,9 @@ class GameObject(Object):
     def __iter__(self):
         for t in self.transform:
             yield t.game_object
+
+    def destroy(self):
+        """Clean up everything."""
+        for component in self.components.values():
+            component.destroy()
+        self.components.clear()
