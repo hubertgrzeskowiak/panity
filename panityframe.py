@@ -4,6 +4,7 @@ from wx.lib.agw import aui
 
 from inspectorpanel import InspectorPanel
 from pandaviewport import PandaViewport
+from messagecenter import messageserver
 
 class PanityFrame(wx.Frame):
     def __init__(self):
@@ -76,13 +77,13 @@ class PanityFrame(wx.Frame):
 
         
         # Game Panel
-        self.game_panel = PandaViewport(self.content_panel)
+        self.game_panel = PandaViewport("game", self.content_panel)
         self.game_panel.SetMinSize(wx.Size(200,200))
         content_sizer.Add(self.game_panel, 1, wx.EXPAND)
 
         
         # Editor Pane
-        self.editor_panel = PandaViewport(self.content_panel)
+        self.editor_panel = PandaViewport("editor", self.content_panel)
         self.editor_panel.SetMinSize(wx.Size(200,200))
         content_sizer.Add(self.editor_panel, 1, wx.EXPAND)
         
@@ -138,6 +139,10 @@ class PanityFrame(wx.Frame):
         self.mgr.Update()
 
 
+        # keep the global message server ticking
+        self.messageserver_timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, messageserver.process, self.messageserver_timer)
+        self.messageserver_timer.Start(1000.0/60) # 60 times a second
         #self.Centre(wx.BOTH)
 
     def Destroy(self):
