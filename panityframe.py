@@ -81,7 +81,7 @@ class PanityFrame(wx.Frame):
         self.game_panel.SetMinSize(wx.Size(200,200))
         content_sizer.Add(self.game_panel, 1, wx.EXPAND)
 
-        
+
         # Editor Pane
         self.editor_panel = PandaViewport("editor", self.content_panel)
         self.editor_panel.SetMinSize(wx.Size(200,200))
@@ -137,13 +137,6 @@ class PanityFrame(wx.Frame):
         self.mgr.AddPane(self.editor_panel,
                          aui.AuiPaneInfo().Bottom().Caption("Editor").Layer(0).MinSize(self.editor_panel.GetMinSize()).MaximizeButton())
         self.mgr.Update()
-
-
-        # keep the global message server ticking
-        self.messageserver_timer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, messageserver.process, self.messageserver_timer)
-        self.messageserver_timer.Start(1000.0/60) # 60 times a second
-        #self.Centre(wx.BOTH)
 
     def Destroy(self):
         """Clean up the AUI Manager. Do not put this into an EVT_WINDOW_DESTROY event handler.

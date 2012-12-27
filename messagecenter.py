@@ -3,46 +3,55 @@ This module offers a few classes for IPC through unnamed pipes.
 We're using this to communicate between the wxPython instance and
 Panda3D instances.
 
-
 Basically every P3D app has a wx.Panel that serves as a host for the P3D
 window. The P3D app gets a pipe which it should wrap with a MessageClient,
-add a listener and call the process method of the MessageClient a few times a
-second. Same applies to the wx.Panel side. The difference is that the host
+add a listener and call the "process" method of the MessageClient a few times
+a second. Same applies to the wx.Panel side. The difference is that the host
 wx panel and the messageserver run in the same process, thus using real pipes
-would be slow. We use a FakePipe for that channel.
+would be slow. We use a fake pipe for that channel. The server's "process"
+function is called from wx, too.
 
-All pipes are connected to MessageServer and the server reads the recievers
-attribute of each message and forwards it. Recievers can either be one client,
-multiple or something like ALL (including the sender) or OTHERS.
-
+All pipes are connected to MessageServer and the server reads the "recievers"
+attribute of each message and forwards it according to that.
+Recievers can either be one client, multiple or a group like ALL (including
+the sender) or OTHERS.
 
 Communication partners in the regular case:
 
++-------------------------------------------------------+
+|[editor gui]   [game gui]   <- both are wx Panels      |
+|     \            /                                    |
+|      \          /                                     |   <- WX Process
+|    [MessageServer]                                    |
+|      /          \                                     |
++---- / -----+---- \ -----------------------------------+
+|     |      |     |                                    |
+|     |      |     |                                    |  <- Subprocesses
+|  [editor]  |    [game]     <- corresponding P3D apps  | (1 for each p3d app)
++------------+------------------------------------------+
 
-[editor gui]   [game gui]   <- both are wx Panels
-     \            /
-      \          /
-    [MessageServer]
-      /          \ 
-     /            \ 
-  [editor]      [game]     <- corresponding P3D apps
-
-
-The naming convention (containers with appended " gui") is important so that
-P3D apps can send messages to their containers in the GUI.
+The naming convention (panels with appended " gui") is important so that
+P3D apps can send messages to their 'containers' in the GUI.
 
 All wiring of pipes with the server is done from wx, since wx spawns P3D apps.
+Panda3d only gets a pipe and wraps it into a MessageClient.
 """
 
 import collections
 
 # reciever types
-ALL, OTHERS = range(2)
+ALL, OTHERS = RECIEVER_TYPES = range(2)
 
-# request types.
-# If multiple classes of a type are needed, it might be a good idea to create
-# superclasses that carry the attribute
-LOG, UI, COMMAND = range(3)
+# request types
+LOG, UI, COMMAND = REQ_TYPES = range(3)
+
+# request specialisations
+ADD_GAME_OBJECT, REMOVE_GAME_OBJECT,\
+OPEN_WINDOW, CLOSE_WINDOW, RESIZE_WINDOW, FOCUS_WINDOW = REQ_SPECS = range(6)
+
+class LogRequest(object):
+    """Request for logging/printing something."""
+    req_type = LOG
 
 class UIRequest(object):
     """UI Requests are not saved in a history. They're only used for
@@ -50,62 +59,83 @@ class UIRequest(object):
     """
     req_type = UI
 
-    def __init__(self, command, args=[]):
-        self.command = command
-        self.args = args
-
 class CommandRequest(object):
-    """Abstract class.
-    Do not instantiate this class. It's only meant for subclassing.
-
-    CommandRequest subclasses stand for a function each. The function has
-    to be implemented and called by the recievers, though.
-    """
+    """Commands are all saved in a global history and should be undo-able."""
     req_type = COMMAND
 
-    def __init__(self):
-        self.undo = None
 
 class AddGameObjectRequest(CommandRequest):
     """Create a game object with the default name and save the submitted
-    id as reference.
+    id as reference. It can be renamed in a second step with a
+    ComponentAttributeChangeRequest.
     """
-    def __init__(self, idnr):
-        CommandRequest.__init__(self)
-        # idnr stands for id number
-        CommandRequest.__init__(self)
-        self.idnr = idnr
+    req_spec = ADD_GAME_OBJECT
+    def __init__(self, go_id):
+        """The id can be any random but unique number.
+        You must not use an id of an object that has been created previously.
+        """
+        self.go_id = go_id
 
-class RemoveGameObjectRequest(object):
-    def __init__(self, idnr):
-        CommandRequest.__init__(self)
-        self.idnr = idnr
+class RemoveGameObjectRequest(CommandRequest):
+    req_spec = REMOVE_GAME_OBJECT
+    def __init__(self, go_id):
+        self.go_id = go_id
+
+class OpenWindowRequest(UIRequest):
+    req_spec = OPEN_WINDOW
+    def __init__(self, window_id, handle=None, width=500, height=500):
+        self.window_id = window_id
+        self.handle = handle
+        self.width = width
+        self.height = height
+
+class CloseWindowRequest(UIRequest):
+    req_spec = CLOSE_WINDOW
+    def __init__(self, window_id):
+        self.window_id = window_id
+
+class ResizeWindowRequest(UIRequest):
+    req_spec = RESIZE_WINDOW
+    def __init__(self, window_id, width, height):
+        self.window_id = window_id
+        self.width = width
+        self.height = height
+
+class FocusWindowRequest(UIRequest):
+    req_spec = FOCUS_WINDOW
+    def __init__(self, window_id):
+        self.window_id = window_id
 
 
-def FakePipe():
-    """Simulated pipe for communicating inside one process, where
-    race conditions can't occur.
-    """
-    con1 = FakeConnection()
-    con2 = FakeConnection()
-    con1.query2 = con2.query1
-    con2.query2 = con1.query1
-    return con1, con2
+# The following code is deprecated since multiprocessing.dummy.connection.Pipe
+# offers more or less the same functionality.
 
-class FakeConnection(object):
-    """Used by FakePipe only. Not really usable otherwise."""
-    def __init__(self):
-        self.query1 = []
-        self.query2 = []
+# class FakeConnection(object):
+#     """Used by FakePipe only. Not really usable otherwise."""
+#     def __init__(self):
+#         self.query1 = []
+#         self.query2 = []
 
-    def send(self, payload):
-        self.query2.append(payload)
+#     def send(self, payload):
+#         self.query2.append(payload)
 
-    def recv(self):
-        return self.query1.pop()
+#     def recv(self):
+#         return self.query1.pop()
 
-    def poll(self):
-        return self.query1 != []
+#     def poll(self):
+#         return self.query1 != []
+
+# def FakePipe():
+#     """Simulated pipe for communicating inside one process, where
+#     race conditions can't occur. Tries to copy multiprocessing.Pipe.
+#     """
+#     con1 = FakeConnection()
+#     con2 = FakeConnection()
+#     con1.query2 = con2.query1
+#     con2.query2 = con1.query1
+#     return con1, con2
+
+
 
 
 class Message(object):
@@ -119,28 +149,64 @@ class Message(object):
         if it is another iterable, it should be a list of strings which are
         considered to be client names
 
-        payload should be one of the Request ckasses.
+        payload should be one of the Request classes.
         """
         self.recievers = recievers
         self.payload = payload
 
+# TODO: Move this to another module, so that subprocesses don't import yet
+# another global messageserver.
 class MessageClient(object):
     """One end of a pipe. This is the preferred way of using a pipe."""
     def __init__(self, pipe):
-        """Pipe should be a multiprocessing.Pipe, but can actually be anything
-        that has the methods send, poll and recv - e.g. FakePipe.
+        """Pipe should be a multiprocessing.Pipe or
+        multiprocessing.dummy.connection.Pipe (fake pipe).
         """
         self.pipe = pipe
         self.listeners = []
+        self.type_listeners = {}
 
-    def addListener(self, listener):
-        if listener not in self.listeners:
-            self.listeners.append(listener)
+    def addListener(self, listener, req_type=None):
+        """Add a listener (function) that is invoked every time a message
+        arrives. If req_type is not None, that listener will be activated only
+        if a message payload has that request type.
+        Every listener can only be used once for a target. So you can't assign
+        the same function twice to a specific req_type. You also can't assign
+        a listener to all types (req_type=None) more than once. The second try
+        will be ignored silently.
 
-    def removeListener(self, listener):
-        self.listeners.remove(listener)
+        Arguments:
+        listener -- a function
+        req_type -- one of the request types specified in this module
+                    (E.g. UI, COMMAND, LOG). Leave at None for all types.
+        """
+        if req_type is None:
+            if listener not in self.listeners:
+                self.listeners.append(listener)
+        else:
+            if not self.type_listeners.has_key(req_type):
+                self.type_listeners[req_type] = []
+            if listener not in self.type_listeners[req_type]:
+                self.type_listeners[req_type].append(listener)
+
+    def removeListener(self, listener, req_type=None):
+        """Remove a listener. If req_type is None, only listeners listening
+        to all types will be removed. To remove a listener that listens for
+        e.g. req_type=UI you need to specify that.
+        This function throws a ValueError if no such listener can be found.
+        """
+        if req_type is None:
+                self.listeners.remove(listener)
+        else:
+            try:
+                self.type_listeners[req_type].remove(listener)
+            except KeyError:
+                raise ValueError("No such listener")
 
     def sendMessage(self, message):
+        """Send a message through the pipe. Message should be an instance of
+        Message. Otherwise there might be problems on the reading side.
+        """
         self.pipe.send(message)
 
     def broadcast(self, payload):
@@ -155,8 +221,8 @@ class MessageClient(object):
         """Convenience method.
         Send a message to multiple recievers with the specified payload.
         """
-        assert not isinstance(recievers, basestring) and \
-            isinstance(recievers, collections.Iterable)
+        assert not isinstance(recievers, basestring)
+        assert isinstance(recievers, collections.Iterable)
         m = Message(recievers=recievers, payload=payload)
         self.pipe.send(m)
 
@@ -180,6 +246,11 @@ class MessageClient(object):
             message = self.pipe.recv()
             for listener in self.listeners:
                 listener(message)
+            rt = message.payload.req_type
+            if self.type_listeners.has_key(rt):
+                for listener in self.type_listeners[rt]:
+                    listener(message)
+
 
 class MessageServer(object):
     """Connection of all pipes which processes forwarding.
@@ -189,15 +260,28 @@ class MessageServer(object):
         self.pipes = {}
 
     def connectPipe(self, name, pipe):
+        """Neither the name nor the pipe connection must be used already.
+        AssertionError is thrown if one of both is the case.
+        """
+        assert name not in self.pipes.keys()
+        assert pipe not in self.pipes.values()
         self.pipes[name] = pipe
 
-    def detachPipeByName(self, name):
-        del self.pipes[name]
-
     def detachPipe(self, pipe):
+        """Detach the pipe from the server, but keep the object alive and
+        return it.
+        Arguments:
+        pipe -- can either be a name or a Connection object
+        """
+        if isinstance(pipe, basestring):
+            con = self.pipes[name]
+            del self.pipes[name]
+            return con
         for name in self.pipes.keys():
             if self.pipes[name] == pipe:
+                con = self.pipes[name]
                 del self.pipes[name]
+                return con
 
     def process(self, *args, **kwargs):
         """Process all messages. This method should be called often."""
@@ -235,7 +319,6 @@ class MessageServer(object):
                               " because it was sent to itself.").format(name)
                         continue
                     if message.recievers in self.pipes.keys():
-                        # TODO: why the fuck does this not work?! WRRRAAARRGH *trollface*
                         self.pipes[message.recievers].send(message)
                     else:
                         raise StandardError("fail2")
@@ -250,25 +333,3 @@ class MessageServer(object):
 
 # set global instance
 messageserver = MessageServer()
-
-
-# Test
-# TODO: rewrite this!
-if __name__ == "__main__":
-    p1 = FakePipe() # A
-    p2 = FakePipe() # B
-
-    pay = CommandRequest(lambda: True)
-    m = Message()
-    m.recievers = "B"
-    m.payload = pay
-    p1.send(m)
-    p1.send(m)
-
-    ms = MessageServer()
-    ms.connectPipe("A", p1)
-    ms.connectPipe("B", p2)
-
-    ms.process()
-    assert p2.recv() is not None
-    print p1.query, p2.query

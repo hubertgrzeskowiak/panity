@@ -1,50 +1,43 @@
 import sys
 import os
 from multiprocessing import Process, Pipe
+from multiprocessing.dummy.connection import Pipe as FakePipe
 
 import wx
 
 from messagecenter import *
-from embeddedpanda3dapp import EmbeddedPanda3dApp
-from gameobject import GameObject
+from panda3dmanager import panda3dmanager
+
 
 class PandaViewport(wx.Panel):
-    """A special Panel which holds an embedded Panda3d window."""
-    def __init__(self, app_type, *args, **kwargs):
-        """app_type should be a string, a name for the p3d app, e.g. "preview"
-        or "editor".
-        """
+    """A special Panel which holds an embedded Panda3d window.
+    On initialisation (but not until the panel is shown) a new window is
+    created for the given p3d_name (which is a name of a Panda3d instance in
+    the panda3dmanager).
+    """
+    def __init__(self, p3d_name, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
 
-        self.app_type = app_type
+        self.p3d_name = p3d_name
+        self.p3dinstance = panda3dmanager.getPanda3dInstance(p3d_name)
+        self.messageclient = self.p3dinstance.messageclient
+        self.messageclient.addListener(self.UImessageProcessor, UI)
+        # The window is is set in initialize.
+        self.window_id = None
 
-        local_pipe, remote_pipe = FakePipe()
-        self.messageclient = MessageClient(local_pipe)
-        self.messageclient.addListener(self.messageProcessor)
-        self.messageclient_timer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.messageclient.process, self.messageclient_timer)
-
-        messageserver.connectPipe(self.app_type+" gui", remote_pipe)
-
-        # See __doc__ of initialize() for this callback
+        # See __doc__ of initialize() for this callback.
         self.GetTopLevelParent().Bind(wx.EVT_SHOW, self._onShow)
-
 
     def initialize(self):
         """This method requires the top most window to be visible, i.e. you called Show()
         on it. Call initialize() after the whole Panel has been laid out and the UI is mostly done.
-        It will spawn a new process with a new Panda3D window and this Panel as parent.
+        It will spawn a new process with a new Panda3D window and this Panel as host.
         """
         assert self.GetHandle() != 0
-        server_pipe, pandas_pipe = Pipe()
+
         w, h = self.ClientSize.GetWidth(), self.ClientSize.GetHeight()
-        self.panda_process = Process(target=EmbeddedPanda3dApp, args=(
-            self.GetHandle(), pandas_pipe, self.app_type, w, h))
-        self.panda_process.start()
-        messageserver.connectPipe(self.app_type, server_pipe)
-
-        self.messageclient_timer.Start(1000.0/60) # 60 times a second
-
+        self.window_id = panda3dmanager.openWindow(self.p3dinstance,
+                                                   w, h, self.GetHandle())
         self.Bind(wx.EVT_SIZE, self._onResize)
         self.Bind(wx.EVT_KILL_FOCUS, self._onDefocus)
         self.Bind(wx.EVT_WINDOW_DESTROY, self._onDestroy)
@@ -61,9 +54,11 @@ class PandaViewport(wx.Panel):
         event.Skip()
 
     def _onResize(self, event):
+        if self.window_id is None:
+            return
         # when the wx-panel is resized, fit the panda3d window into it
         w, h = event.GetSize().GetWidth(), event.GetSize().GetHeight()
-        self.messageclient.unicast(self.app_type, UIRequest("resizeWindow", [w, h]))
+        self.messageclient.unicast(self.p3d_name, ResizeWindowRequest(self.window_id, w, h))
 
         self.GetTopLevelParent().Refresh()
  
@@ -74,34 +69,30 @@ class PandaViewport(wx.Panel):
             f.GetTopLevelParent().Raise()
 
     def _onDestroy(self, event):
-        messageserver.detachPipeByName(self.app_type)
-        # Give Panda a second to close itself and terminate it if it doesn't
-        self.panda_process.join(1)
-        if self.panda_process.is_alive():
-            self.panda_process.terminate()
+        pass
+        # TODO!
 
-    def messageProcessor(self, message):
+    def UImessageProcessor(self, message):
         p = message.payload
-        if p.req_type == UI:
-            if p.command == "setFocus":
+    
+        if p.req_spec == FOCUS_WINDOW:
+            if p.window_id == self.window_id:
                 self.SetFocus()
-        elif p.req_type == COMMAND:
-            if isinstance(p, AddGameObjectRequest):
-                print self.app_type, "adding game object", p.idnr
 
+# TODO
 # Test
-if __name__ == "__main__":
-    app = wx.App(redirect=False)
-    frame = wx.Frame(parent=None, size=wx.Size(500,500))
-    p = PandaViewport(parent=frame)
-    t = wx.TextCtrl(parent=frame)
-    sizer = wx.FlexGridSizer(2, 1) # two rows, one column
-    sizer.AddGrowableRow(0) # make first row growable
-    sizer.AddGrowableCol(0) # make first column growable
-    sizer.SetFlexibleDirection(wx.BOTH)
-    sizer.SetNonFlexibleGrowMode(wx.FLEX_GROWMODE_SPECIFIED)
-    sizer.Add(p, flag=wx.EXPAND)
-    sizer.Add(t, flag=wx.EXPAND)
-    frame.SetSizer(sizer)
-    frame.Show()
-    app.MainLoop()
+# if __name__ == "__main__":
+#     app = wx.App(redirect=False)
+#     frame = wx.Frame(parent=None, size=wx.Size(500,500))
+#     p = PandaViewport(parent=frame)
+#     t = wx.TextCtrl(parent=frame)
+#     sizer = wx.FlexGridSizer(2, 1) # two rows, one column
+#     sizer.AddGrowableRow(0) # make first row growable
+#     sizer.AddGrowableCol(0) # make first column growable
+#     sizer.SetFlexibleDirection(wx.BOTH)
+#     sizer.SetNonFlexibleGrowMode(wx.FLEX_GROWMODE_SPECIFIED)
+#     sizer.Add(p, flag=wx.EXPAND)
+#     sizer.Add(t, flag=wx.EXPAND)
+#     frame.SetSizer(sizer)
+#     frame.Show()
+#     app.MainLoop()
